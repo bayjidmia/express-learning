@@ -1,119 +1,12 @@
-// const express = require('express')
-import express, { type Request, type Response } from "express";
-import { Pool } from "pg";
-import dotenv from "dotenv";
-dotenv.config();
-const app = express();
-const port = 5000;
+import app from "./app";
+import { config } from "./config/config";
+import { initdb } from "./db";
 
-app.use(express.json());
-app.use(express.text());
-app.use(express.urlencoded({ extended: true }));
-
-const pool = new Pool({
-  connectionString: process.env.NEONDB_CONNECTION_STRING,
-});
-
-const initdb = async () => {
-  try {
-    await pool.query(`CREATE TABLE IF NOT EXISTS users (
-      id SERIAL PRIMARY KEY,
-      name VARCHAR(20) NOT NULL,
-      email VARCHAR(20) NOT NULL UNIQUE,
-      password VARCHAR(20) NOT NULL,
-      is_active BOOLEAN DEFAULT true,
-      age int,
-      created_at TIMESTAMP DEFAULT Now(),
-      updated_at TIMESTAMP DEFAULT Now()
-    )`);
-  } catch (error) {
-    console.error("Error initializing database:", error);
-  }
+const server = () => {
+  initdb();
+  app.listen(config.port, () => {
+    console.log(`Example app listening on port ${config.port}`);
+  });
 };
 
-initdb();
-
-app.get("/", (req: Request, res: Response) => {
-  // res.send("Hello World!");
-  res.status(200).json({
-    message: "hello world",
-    author: "next level",
-  });
-});
-
-app.post("/api/users", async (req: Request, res: Response) => {
-  const { name, email, password, age } = req.body;
-  try {
-    const result = await pool.query(
-      `INSERT INTO users (name, email, password, age) VALUES ($1, $2, $3, $4) RETURNING *`,
-      [name, email, password, age],
-    );
-
-    res.status(201).json({
-      message: " user created sucessfully",
-      data: result.rows,
-    });
-  } catch (error: any) {
-    res.status(500).json({
-      message: error.message,
-      error: error,
-    });
-  }
-});
-
-app.get("/api/users", async (req: Request, res: Response) => {
-  try {
-    const result = await pool.query(`SELECT * FROM users`);
-    console.log(result);
-    res.status(200).json({
-      message: "users retrived successfully",
-      data: result.rows,
-    });
-  } catch (error: any) {
-    res.status(500).json({
-      message: error.message,
-      error: error,
-    });
-  }
-});
-
-app.get("/api/users/:id", async (req: Request, res: Response) => {
-  const { id } = req.params;
-  try {
-    const result = await pool.query(`SELECT * FROM users WHERE id=$1`, [id]);
-    res.status(200).json({
-      message: "user retrieved successfully",
-      data: result.rows[0],
-    });
-  } catch (error: any) {
-    res.status(500).json({
-      message: error.message,
-      error: error,
-    });
-  }
-});
-
-app.put("/api/users/:id", async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const { name, password, age, is_active } = req.body;
-
-  try {
-    const result = await pool.query(
-      `UPDATE users SET name=$1,  password=$2, age=$3, is_active=$4, updated_at=Now() WHERE id=$5 RETURNING *`,
-      [name, password, age, is_active, id],
-    );
-    res.status(200).json({
-      message: "user updated successfully",
-      data: result.rows[0],
-    });
-  } catch (error: any) {
-    res.status(500).json({
-      message: error.message,
-      error: error,
-    });
-  }
-});
-
-app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
-});
+server();
