@@ -21,4 +21,17 @@ const getUserbyIdfromDb = async (id: string) => {
   return result;
 };
 
-export { createUserintoDb, getAllUsersfromDb, getUserbyIdfromDb };
+const updateUserinDb = async (payLoad: Iuser, id: string) => {
+  const { name, password, age, is_active } = payLoad;
+  const result = await pool.query(
+    `UPDATE users SET name=COALESCE($1,name),  password=COALESCE($2,password), age=COALESCE($3,age), is_active=COALESCE($4,is_active), updated_at=Now() WHERE id=$5 RETURNING *`,
+    [name, password, age, is_active, id],
+  );
+  return result;
+};
+export {
+  createUserintoDb,
+  getAllUsersfromDb,
+  getUserbyIdfromDb,
+  updateUserinDb,
+};
