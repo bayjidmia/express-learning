@@ -5,4 +5,5 @@ dotenv.config({ path: path.join(process.cwd(), ".env") });
 export const config = {
   connection_string: process.env.NEONDB_CONNECTION_STRING as string,
   port: process.env.PORT as string,
+  secret: process.env.JWT_SECRET as string,
 };
